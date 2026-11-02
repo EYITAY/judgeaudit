@@ -24,27 +24,6 @@ CC BY-NC 4.0). Do not relicense them.
 Use any OpenAI-compatible endpoint (vLLM, Together, OpenRouter, ...). The endpoint must return the model's
 reasoning (`reasoning_content` or `reasoning`). Traces without visible reasoning are dropped.
 
-```bash
-export OPENAI_API_KEY=...            # or whatever key variable you pass with --api-key-env
-
-# generate 50 prompts x 2 samples x 2 open-weight reasoning models = about 200 traces
-python -m awarejudge.cli gen --model-name modelA --model <id> --base-url <url> --out traces/a.jsonl
-python -m awarejudge.cli gen --model-name modelB --model <id> --base-url <url> --out traces/b.jsonl
-cat traces/a.jsonl traces/b.jsonl > traces/all.jsonl
-
-# Add summarized forms (150 and 60 words)
-python -m awarejudge.cli forms --traces traces/all.jsonl --summ-model <id> --summ-base-url <url> --out traces/forms.jsonl
-
-# write the label sheet (100 traces, balanced across model and category), then label it
-python -m awarejudge.cli sheet --traces traces/forms.jsonl --n 100 --out labels/sheet.csv
-#   -> read docs/labeling_guide.md; two people label the first 30 independently and reconcile
-
-# Judge every cell (4 rubrics x 2 judges x 3 forms) while labeling happens
-python -m awarejudge.cli judge --traces traces/forms.jsonl --judge-models <judgeA> <judgeB> --base-url <url> --out results/judgments.jsonl
-
-# Report and gate verdict
-python -m awarejudge.cli analyze --judgments results/judgments.jsonl --labels labels/sheet.csv --out results/report.md
-```
 Add `--dummy` to gen/forms/judge to test the plumbing offline.
 
 ## Pre-set gate (change thresholds before the pilot, not after)
