@@ -1,6 +1,6 @@
 # Judge Audit
 
-**Same traces, different verdicts.** A one-week pilot (package name `awarejudge`).
+**Same traces, different verdicts.** (package name `awarejudge`).
 
 **Question.** On identical reasoning traces, how much do reported evaluation-awareness rates change with
 (a) the rubric definition, (b) the judge model, and (c) whether the judge sees raw or summarized reasoning?
