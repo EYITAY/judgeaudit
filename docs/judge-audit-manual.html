@@ -1,0 +1,184 @@
+<title>Judge Audit Pilot Manual</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column, day-by-day steps with command blocks and a decision table at the end. */
+:root{
+  --bg:#f6f7f8; --surface:#ffffff; --fg:#1b2127; --muted:#58636e; --line:#d9dee3;
+  --accent:#1f5f8b; --accent-soft:#e3eef6; --code-bg:#eef1f4; --warn:#9a5b00; --warn-soft:#fbf0dc;
+  --display:"Newsreader",Georgia,serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12171c; --surface:#1a2128; --fg:#e6eaee; --muted:#9aa6b1; --line:#2c353e;
+  --accent:#7ab6e0; --accent-soft:#1d2f3d; --code-bg:#0e1317; --warn:#e8b25c; --warn-soft:#2e2412; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171c; --surface:#1a2128; --fg:#e6eaee; --muted:#9aa6b1; --line:#2c353e;
+  --accent:#7ab6e0; --accent-soft:#1d2f3d; --code-bg:#0e1317; --warn:#e8b25c; --warn-soft:#2e2412; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.6;padding-inline:16px;padding-block:32px}
+main{max-width:760px;margin:0 auto;min-width:0}
+h1{font-family:var(--display);font-size:2.2rem;line-height:1.15;margin:0 0 8px;text-wrap:balance}
+h2{font-family:var(--display);font-size:1.5rem;margin:40px 0 8px;text-wrap:balance}
+h3{font-size:1rem;margin:20px 0 4px}
+p,li{max-width:68ch}
+.lede{color:var(--muted);font-size:1.05rem}
+.status{background:var(--warn-soft);color:var(--fg);border:1px solid var(--warn);border-radius:6px;padding:12px 14px;margin:20px 0}
+.status b{color:var(--warn)}
+.label{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;margin:14px 0;min-width:0}
+.step h3{margin-top:0;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.day{font-family:var(--mono);font-size:.8rem;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:4px}
+pre{background:var(--code-bg);border-radius:4px;padding:12px;overflow-x:auto;font-family:var(--mono);font-size:.84rem;line-height:1.5;margin:10px 0}
+code{font-family:var(--mono);font-size:.88em;background:var(--code-bg);padding:1px 5px;border-radius:3px}
+pre code{background:none;padding:0}
+ul,ol{padding-left:1.3rem}
+.tw{overflow-x:auto;margin:12px 0}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:.92rem}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft)}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+<main>
+<p class="label">Lab manual · Project 9</p>
+<h1>Judge Audit Pilot Manual</h1>
+<p class="lede">How to run the one-week pilot from an empty folder to a continue, stop or inconclusive decision. Kit name: <code>awarejudge</code>.</p>
+
+<div class="status"><b>Status.</b> The kit has only run on synthetic data. Until real traces and human labels exist, no number it prints means anything about models or judges.</div>
+
+<h2>Where we are</h2>
+<div class="tw"><table>
+<thead><tr><th>Step</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>Step 0: kit runs offline (dummy data)</td><td>Done</td></tr>
+<tr><td>Step 1: choose models and check each endpoint</td><td>Next: you run the checks and send the output</td></tr>
+<tr><td>Step 2: generate traces (test on 5 prompts, then full)</td><td>Not started</td></tr>
+<tr><td>Step 3: summaries</td><td>Not started</td></tr>
+<tr><td>Step 4: label sheet and human labeling</td><td>Not started</td></tr>
+<tr><td>Step 5: run judges</td><td>Not started</td></tr>
+<tr><td>Step 6: report and gate decision</td><td>Not started</td></tr>
+</tbody></table></div>
+<p>Update this table as each step finishes. Details for provider setup are in <code>docs/step1-setup.md</code>.</p>
+
+<h2>What you need before Day 1</h2>
+<ul>
+<li>Two open-weight reasoning models whose reasoning text the API returns (the client reads <code>reasoning_content</code> or <code>reasoning</code>). Proposed: Groq <code>openai/gpt-oss-120b</code> and a DeepSeek reasoning model. Each is checked in Step 1.</li>
+<li>One summarizer model (proposed: GPT-4o).</li>
+<li>Two judge models from different families, and different from the reasoners (proposed: xAI <code>grok-4-fast-non-reasoning</code> and Groq-hosted Llama <code>llama-3.3-70b-versatile</code>). Non-reasoning judges are safest because the judge call is capped at 300 tokens.</li>
+<li>One API key per provider, stored in a <code>.env</code> file (or set as environment variables). Never paste keys into chat or share the file.</li>
+<li>A second person for the double-labeling step, free for 3 to 4 hours during Days 2 to 4.</li>
+<li>Python 3.10 or newer. The kit uses only the standard library.</li>
+<li>A budget under $50. The full design is about 6 million input tokens and 1 million output tokens; multiply by your models' prices, and run a 10-trace test first to see real usage.</li>
+</ul>
+
+<h2>Day 0: set up and test offline</h2>
+<div class="step">
+<h3><span class="day">Day 0</span> Unzip and run the dummy pipeline</h3>
+<pre><code>unzip awarejudge.zip &amp;&amp; cd awarejudge
+python -m awarejudge.cli gen --model-name dummyA --dummy --out traces/dummy.jsonl
+python -m awarejudge.cli forms --traces traces/dummy.jsonl --dummy --out traces/dummy_forms.jsonl
+python -m awarejudge.cli judge --traces traces/dummy_forms.jsonl --judge-models j1 j2 --dummy --out results/dummy_j.jsonl
+python -m awarejudge.cli analyze --judgments results/dummy_j.jsonl --out results/dummy_report.md</code></pre>
+<p>Expected: a report prints. Its numbers are random and must be ignored. Delete the <code>dummy</code> files afterwards so they cannot be mixed into real data.</p>
+</div>
+<div class="step">
+<h3><span class="day">Day 0</span> Step 1: check every model before using it</h3>
+<p>Put your keys in a <code>.env</code> file in the kit's top folder: copy <code>.env.example</code> to <code>.env</code> and paste each key after its <code>=</code>. The kit loads it automatically and never prints the values. Then run all five checks at once with <code>python3 scripts/check_all.py</code> and send the SUMMARY block back. The individual commands are:</p>
+<pre><code>python scripts/check_endpoint.py --base-url https://api.groq.com/openai/v1 --model openai/gpt-oss-120b --api-key-env GROQ_API_KEY
+python scripts/check_endpoint.py --base-url https://api.deepseek.com --model deepseek-reasoner --api-key-env DEEPSEEK_API_KEY
+python scripts/check_endpoint.py --base-url https://api.x.ai/v1 --model grok-4-fast-non-reasoning --api-key-env XAI_API_KEY --role judge
+python scripts/check_endpoint.py --base-url https://api.groq.com/openai/v1 --model llama-3.3-70b-versatile --api-key-env GROQ_API_KEY --role judge
+python scripts/check_endpoint.py --base-url https://api.openai.com/v1 --model gpt-4o --api-key-env OPENAI_API_KEY --role judge</code></pre>
+<p>Both reasoners must print <code>PASS: reasoning text is returned</code>. Each judge must print <code>PASS</code> with a parsed label. If a reasoner fails, it hides its reasoning and cannot be used; swap it. Confirm model names and URLs against each provider's documentation, since they change.</p>
+</div>
+<div class="step">
+<h3><span class="day">Day 0</span> Replace the rubric texts</h3>
+<p>Open <code>awarejudge/rubrics.py</code>. The five rubric instructions are adaptations. Find each source paper's original rubric prompt (for the Goodfire-style rubric, Aranguri and Bloom, Appendix F1), paste it into <code>instructions</code>, and keep a note of any wording you could not obtain. Do this before running any judge, so results are not produced with texts you later change.</p>
+</div>
+<div class="step">
+<h3><span class="day">Day 0</span> Fix the gate in writing</h3>
+<p>The thresholds in <code>analysis.py</code> (<code>GATE</code>) are the rule. Commit or timestamp the file before Day 1. Do not edit thresholds after seeing data; if you do, say so in the write-up.</p>
+</div>
+
+<h2>Day 1 to 2: generate traces</h2>
+<div class="step">
+<h3><span class="day">Day 1</span> Collect reasoning traces from two models</h3>
+<p>First run the test: <code>python3 scripts/step2_test.py</code>. It generates traces for 5 prompts (one per category) from both reasoners and prints reasoning length, answer length, token counts and the finish reason. You want 5 of 5 traces per model, finish reason <code>stop</code> (not <code>length</code>) and non-empty reasoning. Then run in full:</p>
+<pre><code>python -m awarejudge.cli gen --model-name gptoss --model openai/gpt-oss-120b --base-url https://api.groq.com/openai/v1 --api-key-env GROQ_API_KEY --samples 2 --out traces/a.jsonl
+python -m awarejudge.cli gen --model-name deepseek --model deepseek-reasoner --base-url https://api.deepseek.com --api-key-env DEEPSEEK_API_KEY --samples 2 --out traces/b.jsonl
+cat traces/a.jsonl traces/b.jsonl &gt; traces/all.jsonl</code></pre>
+<p>Defaults: 50 prompts, 2 samples each, about 200 traces. A trace with no visible reasoning is dropped, so compare the line counts against 100 per model. Each trace records the provider, model, settings and time in <code>meta</code>.</p>
+</div>
+<div class="step">
+<h3><span class="day">Day 2</span> Create the summarized forms</h3>
+<pre><code>python -m awarejudge.cli forms --traces traces/all.jsonl --summ-model gpt-4o --summ-base-url https://api.openai.com/v1 --summ-api-key-env OPENAI_API_KEY --out traces/forms.jsonl</code></pre>
+<p>This adds a 150-word and a 60-word summary of each trace. Read five summaries. If they invent content not in the raw reasoning, change the summarizer and rerun.</p>
+</div>
+
+<h2>Day 2 to 4: human labels</h2>
+<div class="step">
+<h3><span class="day">Day 2</span> Write the label sheet</h3>
+<pre><code>python -m awarejudge.cli sheet --traces traces/forms.jsonl --n 100 --out labels/sheet.csv</code></pre>
+<p>The sheet holds 100 traces balanced across model and category. Labels are features, not rubric levels: mentions a possible test, concludes it is a test, type of evaluation, notes the scenario is artificial, acts on that belief.</p>
+</div>
+<div class="step">
+<h3><span class="day">Day 2 to 4</span> Label</h3>
+<ol>
+<li>Both labelers read <code>docs/labeling_guide.md</code> and the edge-case table.</li>
+<li>Label the first 30 traces independently, without discussing.</li>
+<li>Compute agreement on those 30. If Cohen's kappa on "mentions a possible test" is under 0.7, refine the guide, reconcile, and label another 20 independently.</li>
+<li>Reconcile disagreements, then one person labels the remaining 70.</li>
+<li>Label from the raw reasoning only, never from summaries.</li>
+</ol>
+<p>Judges must not see the labels, and labelers must not see any judge output until labeling is finished.</p>
+</div>
+
+<h2>Day 3: run the judges</h2>
+<div class="step">
+<h3><span class="day">Day 3</span> Judge every rubric, judge and form</h3>
+<pre><code>python -m awarejudge.cli judge --traces traces/forms.jsonl \
+  --judge grok grok-4-fast-non-reasoning https://api.x.ai/v1 XAI_API_KEY \
+  --judge llama llama-3.3-70b-versatile https://api.groq.com/openai/v1 GROQ_API_KEY \
+  --out results/judgments.jsonl</code></pre>
+<p>This is 5 rubrics × 2 judges × 3 forms per trace, with temperature 0. For 200 traces that is 6,000 calls. Calls retry automatically on rate limits and server errors. Run on 5 traces first (<code>--forms raw --rubrics goodfire_style</code>) to check cost and parsing. Look for rows where <code>level</code> is null: those are unparsable replies. If more than 5% are null, fix the judge prompt format or the model choice and rerun.</p>
+</div>
+
+<h2>Day 5: analyze and decide</h2>
+<div class="step">
+<h3><span class="day">Day 5</span> Run the report</h3>
+<pre><code>python -m awarejudge.cli analyze --judgments results/judgments.jsonl --labels labels/sheet.csv --out results/report.md</code></pre>
+<p>The report lists: the verdict, rate per rubric, model and prompt-category ranking flips, judge-vs-judge and rubric-vs-rubric disagreement, how much of the variance each factor explains, how much awareness survives summarization, and judge-vs-human kappa. It ends with a Judge setup section listing each judge's provider, model, number of calls, truncated calls and dates: publish that with any result.</p>
+</div>
+
+<div class="tw"><table>
+<thead><tr><th>Report says</th><th>Meaning</th><th>Next step</th></tr></thead>
+<tbody>
+<tr><td>CONTINUE</td><td>A model or prompt-category ranking flips between rubrics by at least 0.05 each way, or judge noise is at least half of rubric disagreement.</td><td>Plan the full study (about 6 weeks): more models, original rubrics, larger labeled set, preregistered analysis.</td></tr>
+<tr><td>STOP_OR_SHRINK</td><td>Rubrics within 1.5×, no flips, judge-human kappa at least 0.8.</td><td>Write a short negative result post and stop, or shrink to the trace-form question alone.</td></tr>
+<tr><td>INCONCLUSIVE</td><td>Neither set of conditions holds.</td><td>Extend the labeled sample or traces once, then re-run the same gate. Do not change thresholds.</td></tr>
+</tbody></table></div>
+
+<h2>Before you publish anything</h2>
+<ul>
+<li>Original rubric texts in place, or the adaptation stated.</li>
+<li>Sample sizes and confidence intervals shown next to every rate (the report uses Wilson intervals).</li>
+<li>Rate gaps between rubrics are not presented as new, since judge sensitivity is already established. The claim to test is ranking and conclusion changes, and the split of definition, judge and trace form.</li>
+<li>State that the models, prompts and labelers are few, and that the work was done by one human and one AI.</li>
+<li>Check the license of any data or traces you redistribute.</li>
+</ul>
+
+<h2>Troubleshooting</h2>
+<div class="tw"><table>
+<thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
+<tbody>
+<tr><td>Empty <code>raw</code> reasoning</td><td>Provider returns only a summary or hides reasoning</td><td>Use a provider or local server that returns full reasoning</td></tr>
+<tr><td>Many null judge labels</td><td>Judge adds text around the JSON, or runs out of tokens</td><td>Use a stronger judge, raise <code>max_tokens</code>, check the raw reply</td></tr>
+<tr><td>Rates are 0 or 1 everywhere</td><td>Prompts do not elicit any test talk, or rubric too strict</td><td>Check the category breakdown; do not tune prompts after seeing judge output without noting it</td></tr>
+<tr><td>Low labeler kappa</td><td>Feature definitions unclear</td><td>Add the disputed case to the edge-case table and re-label</td></tr>
+<tr><td>HTTP 4xx error naming a parameter</td><td>A provider rejects <code>max_tokens</code> or <code>temperature</code> for that model</td><td>Tell me the provider and message; the client needs a per-provider setting</td></tr>
+<tr><td>Calls retry slowly or stop with "failed after 4 tries"</td><td>Rate limit or outage</td><td>Run one model at a time, wait, and re-run; the output file is rewritten each run, so keep a copy</td></tr>
+<tr><td>Judges cut off ("cut off by the token limit" in the report)</td><td>Reasoning judge, or reply longer than 300 tokens</td><td>Use a non-reasoning judge or raise the limit in <code>judge.py</code></td></tr>
+<tr><td>Tests fail after an edit</td><td>Row-count assertion assumes 5 rubrics</td><td>Update the assertion if you add or remove a rubric</td></tr>
+</tbody></table></div>
+
+<h2>About the name</h2>
+<p>The code package is called <code>awarejudge</code>. The public name is Judge Audit, because the project audits judges rather than building one.</p>
+</main>

@@ -1,0 +1,13 @@
+[project]
+name = "awarejudge"
+version = "0.0.1"
+description = "Pilot: how much do reported evaluation-awareness rates depend on the rubric, the judge, and the trace form?"
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["awarejudge*"]

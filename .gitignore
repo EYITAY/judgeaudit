@@ -1,0 +1,60 @@
+# Judge Audit: files that must not be committed
+
+# Python and environments
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# Keys and secrets (never commit these)
+.env
+.env.*
+*.key
+*.pem
+secrets*
+
+# Private working notes
+docs/REPORT_NOTES.md
+docs/DEVIATIONS.md
+
+# Early rubric copies that were wrong; not used anywhere
+legacy/
+
+# Study data: traces, labels and judge outputs.
+# Add them later on purpose, after checking the providers' terms (see README). To publish one file, add a line like
+#   !results/judgments_pub.jsonl
+# below the results/ line.
+traces/
+labels/
+results/
+data/traces_all.jsonl
+data/traces*.jsonl
+data/labels*.csv
+data/reconcile.csv
+
+# Pilot and test output that is not study data
+*_pilot*.jsonl
+muse_pilot*
+*.dryrun*
+
+# Archives and exports
+*.zip
+*.tar.gz
+
+# Editor and OS clutter
+.DS_Store
+.idea/
+.vscode/
+*.swp
+# more private data
+label_key_PRIVATE.csv
+*PRIVATE*
+reconcile_from_third_reviewer.csv
+data/forms_*.jsonl
+data/label_sheet.csv
+data/labeler*.csv
+data/one_trace.jsonl
+data/test5_traces.jsonl
