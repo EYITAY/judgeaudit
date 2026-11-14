@@ -71,3 +71,18 @@ Deckenbach et al. prompt is Apache-2.0. Do not relicense them. Licence for this 
 
 Author: Eyitayo Alimi, Independent AI safety researcher.
 
+## Citation
+
+If you use these results or data, please cite:
+
+```
+@misc{alimi2026judgeaudit,
+  author       = {Alimi, Eyitayo},
+  title        = {Judge Audit: How much does a reported "evaluation awareness" rate depend on the instrument that measured it?},
+  year         = {2026},
+  howpublished = {GitHub repository},
+  url          = {[https://github.com/EYITAY/judgeaudit]}
+}
+```
+
+
